@@ -16,6 +16,7 @@ class RemoteClient:
         self.key: str = kwargs.get('key')
         self.password: str = kwargs.get('password')
         self.key_path = kwargs.get('key_path')
+        self.trust = kwargs.get('trust')
 
 
 
@@ -23,7 +24,8 @@ class RemoteClient:
     def client(self):
         try:
             client = paramiko.SSHClient()
-            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            if self.trust is True:
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             if self.key is not None:
                 client.connect(
                     self.host,
