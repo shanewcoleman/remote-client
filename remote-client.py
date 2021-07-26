@@ -91,14 +91,22 @@ class RemoteClient:
     def list_remote_directory(self, dir: str) -> list:
         return self.sftp.listdir(dir)
 
-    def run_cmd_list(self, command: list, environments=None):
+    def run_cmd(self, command: list, environment=None):
         for c in command:
-            stdin, stdout, stderr = self.client.exec_command(command, environment=environments)
-            stdout.channel.recv_exit_status()
-            response = stdout.readlines()
-            for line in response:
-                logging.debug(f"Command: {c}")
-                logging.info(f"Output: {line}")
+            logging.info(f"Running command:\n {c}")
+            stdin, stdout, stderr = self.client.exec_command(c, environment=environment)
+            while stdout.channel.exit_status_ready() == False:
+                self.log_stream(stderr.readlines()) 
+                self.log_stream(stdout.readlines())
+            return
+
+    def log_stream(self, stream): 
+        try:
+            for line in stream:
+                logging.info(line)
+        except paramiko.SSHException as e:
+            logging.error(f"Encountered an SSH error:\n {e}")
+            pass
 
     def upload_file(self, local_file: str, remote_file: str):
         try:
